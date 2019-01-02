@@ -22,4 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 // place overrides here
-
+#undef TAPPING_TERM
+#define TAPPING_TERM 200
+#define LEADER_TIMEOUT 300
+	
+//#define PERMISSIVE_HOLD
+#define RETRO_TAPPING

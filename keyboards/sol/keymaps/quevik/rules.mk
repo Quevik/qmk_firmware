@@ -6,8 +6,8 @@ BOOTMAGIC_ENABLE = no       # Virtual DIP switch configuration(+1000)
 MOUSEKEY_ENABLE = no        # Mouse keys(+4700)
 
 EXTRAKEY_ENABLE = yes       # Audio control and System control(+450)
-CONSOLE_ENABLE = yes        # Console for debug(+400)
-COMMAND_ENABLE = yes        # Commands for debug and configuration
+CONSOLE_ENABLE = no        # Console for debug(+400)
+COMMAND_ENABLE = no        # Commands for debug and configuration
 NKRO_ENABLE = no            # Nkey Rollover - if this doesn't work, see here: https://github.com/tmk/tmk_keyboard/wiki/FAQ#nkro-doesnt-work
 RGBLIGHT_ENABLE = yes       # Enable global lighting effects. Do not enable with RGB Matrix
 RGBLIGHT_ANIMATIONS = yes   # LED animations
@@ -21,7 +21,8 @@ ENCODER_ENABLE_CUSTOM = yes # Enable rotary encoder (+90)
 
 OLED_ENABLE = no            # OLED_ENABLE (+5000)
 IOS_DEVICE_ENABLE = no      # Limit max brightness to connect to IOS device (iPad,iPhone)
-
+TAP_DANCE_ENABLE = yes
+LEADER_ENABLE = yes
 # Do not edit past here
 
 ifeq ($(strip $(OLED_ENABLE)), yes)

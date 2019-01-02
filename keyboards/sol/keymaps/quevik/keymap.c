@@ -9,12 +9,12 @@
 #endif
 
 extern keymap_config_t keymap_config;
+#include "quevik.h"
 
 #ifdef RGBLIGHT_ENABLE
 //Following line allows macro to read current RGB settings
 extern rgblight_config_t rgblight_config;
 #endif
-
 extern uint8_t is_master;
 
 // Each layer gets a name for readability, which is then used in the keymap matrix below.
@@ -24,14 +24,16 @@ extern uint8_t is_master;
 enum layer_number {
     _QWERTY = 0,
     _COLEMAK,
-    _FN,
+    _NAV,
+    _SHIFT,
     _ADJ
 };
 
 enum custom_keycodes {
   QWERTY = SAFE_RANGE,
   COLEMAK,
-  FN,
+  NAV,
+  SHIFT,
   ADJ,
   BACKLIT,
   RGBRST
@@ -41,39 +43,60 @@ enum macro_keycodes {
   KC_SAMPLEMACRO,
 };
 
+// Dual fuction keycodes
+#define KM_LCDL MT(MOD_LALT, KC_DEL)
+#define KM_CENT MT(MOD_LGUI, KC_ENT)
+#define KM_SBSC MT(MOD_LCTL, KC_BSPC)
+#define KM_ASPC MT(MOD_LSFT, KC_SPC)
+#define KM_SCNV LT(_NAV, KC_SCLN)
+
+// Special mods
+#define KC_CAG MOD_LCTL | MOD_LALT | MOD_LGUI
+
+// One shot modifiers
+#define OSM_HYPR OSM(MOD_HYPR)
+#define OSM_GUI OSM(MOD_LGUI)
+#define OSM_MEH OSM(MOD_MEH)
+#define OSM_CAG OSM(KC_CAG)
+#define OSL_ADJ OSL(_ADJ)
+
+// Cmds
+#define KM_CUT  LCTL(KC_X)
+#define KM_COPY LCTL(KC_C)
+#define KM_PASTE LCTL(KC_V)
+
+#define KM_UNDO LCTL(KC_Z)
+#define KM_REDO LCTL(KC_Y)
 
 
-#define FN_ESC  LT(_FN, KC_ESC)
-#define FN_CAPS  LT(_FN, KC_CAPS)
-
-// Define your non-alpha grouping in this define's LAYOUT, and all your BASE_LAYERS will share the same mod/macro columns
-  /* Base Layout
+// Define your non-alpha grouping in this define's LAYOUT, and all your BASE_LAYERS will share the same mod/macro columns`
+  /* Base Layout	
    * ,------------------------------------------------.  ,------------------------------------------------.
-   * | GESC |      |      |      |      |      |   -  |  |   =  |      |      |      |      |      | BkSp |
+   * |  `   |      |      |      |      |      |MediaD|  |MediaU|      |      |      |      |      |  =   |
    * |------+------+------+------+------+------|------|  |------|------+------+------+------+------+------|
-   * | Tab  |      |      |      |      |      |   [  |  |   ]  |      |      |      |      |      |   \  |
+   * | Caps |      |      |      |      |      | Hypr |  | Hypr	|      |      |      |      |      |  \   |
    * |------+------+------+------+------+------|------|  |------|------+------+------+------+------+------|
-   * |FN(CAPS)|    |      |      |      |      |   (  |  |   )  |      |      |      |      |      |   '  |
+   * | Esc  |      |      |      |      |      | Gui  |  | Gui  |      |      |      |      |      |  '   |
    * |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-   * |Shift |      |      |      |      |      |   {  |  |   }  |      |      |      |      |      |Shift |
+   * | Tab  |      |      |      |      |      | Meh  |  | Meh  |      |      |      |      |      |  -   |
    * |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-   * | Ctrl |  Win |  Alt |  RGB | ADJ  | Space| DEL  |  | Enter| Space|  FN  | Left | Down | Up   |Right |
+   * | OSL  | <\<> | {\{} | [\[] | (\() | Bksp | DEL  |  | Enter| Space| )\)( | ]\][ | }\}{ | >\>< | Lead |
    * |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------'
-   *                                    | Space| DEL  |  | Enter| Space|
+   *                                    | Shft | Ctrl |  | Ctrl	| Alt  |
    *                                    `-------------'  `-------------'
-   */
+  */
 #define BASE_LAYOUT( \
   _00, _01, _02, _03, _04,  _05, _06, _07, _08, _09, \
   _10, _11, _12, _13, _14,  _15, _16, _17, _18, _19, \
   _20, _21, _22, _23, _24,  _25, _26, _27, _28, _29 \
 ) \
 LAYOUT( \
-      KC_GESC,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,   KC_MINS, KC_EQL,  KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC, \
-      KC_TAB,  _00,     _01,     _02,     _03,     _04,    KC_LBRC,  KC_RBRC, _05,     _06,     _07,     _08,     _09,     KC_BSLS, \
-      FN_CAPS, _10,     _11,     _12,     _13,     _14,    KC_LPRN,  KC_RPRN, _15,     _16,     _17,     _18,     _19,     KC_QUOT, \
-      KC_LSFT, _20,     _21,     _22,     _23,     _24,    KC_LCBR,  KC_RCBR, _25,     _26,     _27,     _28,     _29,     KC_ENT, \
-      KC_LCTL, KC_LGUI, KC_LALT, RGB_TOG,  ADJ,     KC_SPC, KC_DEL,  KC_ENT,  KC_SPC,  FN,      KC_LEFT, KC_DOWN, KC_UP,  KC_RIGHT, \
-                        KC_VOLU, KC_VOLD,          KC_SPC, KC_DEL,  KC_ENT,  KC_SPC,          KC_VOLU, KC_VOLD \
+      KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,   KC_5,   TDMD, TDMU, KC_6,    KC_7,    KC_8,    KC_9,    KC_0,   KC_EQL, \
+      NAV,  _00,     _01,     _02,     _03,    _04,    OSM_HYPR,  KC_HYPR, _05,     _06,     _07,     _08,     _09,   KC_BSLS, \
+      KC_ESC, _10,     _11,     _12,     _13,     _14,    OSM_CAG,  KC_CAG, _15,     _16,     _17,     _18,     _19,    KC_QUOT, \
+      KC_TAB, _20,    _21,     _22,     _23,    _24,    OSM_MEH,  KC_MEH, _25,     _26,     _27,     _28,     _29,   KC_MINS, \
+      OSL_ADJ, KC_LT, KC_LBRC, KC_LCBR,  KC_LPRN,  KM_SBSC,KM_LCDL, KM_CENT, KM_ASPC,  KC_RSPC,      KC_RCBR, KC_RBRC, KC_GT,  ADJ,\
+                        KC_VOLU, KC_VOLD,         KM_SBSC,KM_LCDL, KM_CENT, KM_ASPC,          KC_VOLU, KC_VOLD \
 )
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -94,7 +117,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    */
   [_QWERTY] = BASE_LAYOUT( \
       KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    \
-      KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, \
+      KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_H,    KC_J,    KC_K,    KC_L,    KM_SCNV, \
       KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH  \
   ),
 
@@ -118,15 +141,37 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       KC_A,    KC_R,    KC_S,    KC_T,    KC_G,   KC_K,    KC_N,    KC_E,    KC_I,    KC_O,    \
       KC_Z,    KC_X,    KC_C,    KC_D,    KC_V,   KC_M,    KC_H,    KC_COMM, KC_DOT,  KC_SLSH  \
   ),
+  /* SHIFT
+   * ,------------------------------------------------.  ,------------------------------------------------.
+   * |      |      |      |      |      |      |      |  |      |      |      |      |  -   |  +   | ==	  |
+   * |------+------+------+------+------+------|------|  |------|------+------+------+------+------+------|
+   * |      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |
+   * |------+------+------+------+------+------|------|  |------|------+------+------+------+------+------|
+   * |      |      |      |      |      |      |      |  |      |      |      |      |      |      |  '   |
+   * |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
+   * |      |      |      |      |      |      |      |  |      |      |      |      |  ->  |      |      |
+   * |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
+   * |      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |
+   * `------+------+------+------+------+------+------|  |------+------+------+------+------+------+------'
+   *                                    |      |      |  |      |      |
+   *                                    `-------------'  `-------------'
+   */
+  [_SHIFT] = LAYOUT( \
+      _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+      _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+      _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+      _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+      _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+                        KC_VOLU, KC_VOLD,          _______, _______, _______, _______,           KC_VOLU, KC_VOLD \
+      ),
 
-
-  /* FN
+  /* NAV
    * ,------------------------------------------------.  ,------------------------------------------------.
    * |  F1  |  F2  |  F3  |  F4  |  F5  |  F6  |      |  |      |  F7  |  F8  |  F9  |  F10 |  F11 |  F12 |
    * |------+------+------+------+------+------|------|  |------|------+------+------+------+------+------|
    * |      | PGDN |  UP  | PGUP |      |      |      |  |      |      | PGDN |  UP  | PGUP | PRINT| HOME |
    * |------+------+------+------+------+------|------|  |------|------+------+------+------+------+------|
-   * |      | LEFT | DOWN | RIGHT|      |      |      |  |      |      | LEFT | DOWN | RIGHT|INSERT| END  |
+   * |      | LEFT | DOWN | RIGHT|      |      |      |  |      | LEFT | DOWN |  UP  | RIGHT|INSERT| END  |
    * |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
    * |      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |
    * |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
@@ -135,7 +180,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
    *                                    |      |      |  |      |      |
    *                                    `-------------'  `-------------'
    */
-  [_FN] = LAYOUT( \
+  [_NAV] = LAYOUT( \
       KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   _______, KC_PSCR, KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12, \
       _______, KC_PGDN, KC_UP,   KC_PGUP, _______, _______, _______, _______, _______, KC_PGDN, KC_UP,   KC_PGUP, KC_PSCR, KC_HOME, \
       _______, KC_LEFT, KC_DOWN, KC_RGHT, _______, _______, _______, _______, _______, KC_LEFT, KC_DOWN, KC_RGHT, KC_INS, KC_END, \
@@ -188,6 +233,18 @@ void update_tri_layer_RGB(uint8_t layer1, uint8_t layer2, uint8_t layer3) {
   }
 }
 
+LEADER_EXTERNS();
+void matrix_scan_user(void) {
+ LEADER_DICTIONARY() {
+	 leading = false;
+	 leader_end();
+	 
+	 SEQ_ONE_KEY(KC_F) {
+		 send_string("Testing Firefox...");
+
+	 }
+ }
+}
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   //uint8_t shifted = get_mods() & (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_RSHIFT));
 
@@ -204,7 +261,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       }
       return false;
       break;
-    case FN:
+    case NAV:
       if (record->event.pressed) {
         //not sure how to have keyboard check mode and set it to a variable, so my work around
         //uses another variable that would be set to true after the first time a reactive key is pressed.
@@ -215,12 +272,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             //rgblight_mode(15);
           #endif
         }
-        layer_on(_FN);
+        layer_on(_NAV);
       } else {
         #ifdef RGBLIGHT_ENABLE
           //rgblight_mode(RGB_current_mode);  // revert RGB to initial mode prior to RGB mode change
         #endif
-        layer_off(_FN);
+        layer_off(_NAV);
         TOG_STATUS = false;
       }
       return false;
@@ -282,7 +339,7 @@ void matrix_update(struct CharacterMatrix *dest,
 
 //assign the right code to your layers for OLED display
 #define L_BASE 0
-#define L_FN (1<<_FN)
+#define L_NAV (1<<_NAV)
 #define L_ADJ (1<<_ADJ)
 
 static void render_logo(struct CharacterMatrix *matrix) {
@@ -320,8 +377,8 @@ void render_status(struct CharacterMatrix *matrix) {
         case L_BASE:
            matrix_write_P(matrix, PSTR("Default"));
            break;
-        case L_FN:
-           matrix_write_P(matrix, PSTR("FN"));
+        case L_NAV:
+           matrix_write_P(matrix, PSTR("NAV"));
            break;
         case L_ADJ:
         case L_ADJ_TRI:
